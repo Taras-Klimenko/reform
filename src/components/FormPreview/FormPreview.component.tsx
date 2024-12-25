@@ -7,16 +7,28 @@ interface FormPreviewProps {
 
 const FormPreview = ({ steps }: FormPreviewProps) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [formData, setFormData] = useState<
+    Record<string, Record<string, string>>
+  >({});
   const [errors, setErrors] = useState<string | null>(null);
 
   const currentStep = steps[currentStepIndex];
 
   const validateStep = () => {
-    if (!formData[currentStep.id]) {
-      setErrors('This field is required');
+    const stepData = formData[currentStep.id] || {};
+    const missingFields = currentStep.inputs.filter(
+      (input) => !stepData[input.name]
+    );
+
+    if (missingFields.length) {
+      setErrors(
+        `Please fill out: ${missingFields
+          .map((input) => input.label)
+          .join(', ')}`
+      );
       return false;
     }
+
     setErrors('');
     return true;
   };
@@ -34,22 +46,46 @@ const FormPreview = ({ steps }: FormPreviewProps) => {
   };
 
   const changeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [currentStep.id]: event.target.value });
+    const { name, value } = event.target;
+    setFormData({
+      ...formData,
+      [currentStep.id]: { ...formData[currentStep.id], [name]: value },
+    });
   };
 
   if (!steps.length) {
-    return <p>No steps available. Please add a step in the editor.</p>;
+    return (
+      <p>
+        There is nothing to preview yet. Try adding new steps in the Editor!
+      </p>
+    );
   }
+  if (!steps[currentStepIndex]?.inputs.length) {
+    return (
+      <p>
+        There are no form fields on this step yet. Try adding new fields in the
+        Editor!
+      </p>
+    );
+  }
+  console.log(formData);
 
   return (
     <div>
       <h3>{currentStep.title}</h3>
-      <input
-        type="text"
-        value={formData[currentStep.id] || ''}
-        onChange={changeHandler}
-        placeholder={currentStep.content.props.children}
-      />
+      {currentStep.inputs.map((input) => (
+        <label key={input.id}>
+          {input.label}
+          <input
+            type={input.type}
+            name={input.name}
+            value={formData[currentStep.id]?.[input.name] || ''}
+            onChange={changeHandler}
+            placeholder={input.placeholder}
+          />
+        </label>
+      ))}
+
       {errors && <p style={{ color: 'red' }}>{errors}</p>}
 
       <div>

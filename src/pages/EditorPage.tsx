@@ -165,7 +165,7 @@ const EditorPage = () => {
         onEdit={editStepHandler}
         onDelete={deleteStepHandler}
       />
-      {/* <FormPreview steps={steps}></FormPreview> */}
+      <FormPreview steps={steps}></FormPreview>
     </div>
   );
 };
